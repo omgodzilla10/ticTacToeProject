@@ -9,15 +9,17 @@ public class Driver {
   public static void main(final String[] argv) {
     final Frame frame;
     final Board board;
+    final RandomAI randomAI;
     
-    board = new Board(COLUMNS, ROWS);
+    randomAI = new RandomAI();
+    
+    board = new Board(COLUMNS, ROWS, randomAI);
     board.init();
     
     frame = new Frame(board);
-    frame.init();
-    
     frame.setSize(new Dimension(500, 500));
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.init();
     frame.setVisible(true);
   }
 }
