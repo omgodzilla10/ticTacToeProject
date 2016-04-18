@@ -1,5 +1,5 @@
 import java.util.ArrayList;
 
 public interface AIOpponent {
-  public void takeTurn(ArrayList<BoardSection> unusedSections);
+  public void takeTurn(BoardSection[][] sections);
 }

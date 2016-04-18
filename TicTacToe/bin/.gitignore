@@ -6,3 +6,6 @@
 /TurnListener.class
 /AIOpponent.class
 /RandomAI.class
+/SmartAI.class
+/SmartAI$Node.class
+/SmartAI$Connection.class

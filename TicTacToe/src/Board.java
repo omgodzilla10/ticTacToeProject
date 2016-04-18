@@ -19,21 +19,11 @@ public class Board {
   }
   
   public void opponentTakeTurn() {
-    opponent.takeTurn(getAllUnusedSections());
+    opponent.takeTurn(getAllSections());
   }
   
-  public ArrayList<BoardSection> getAllUnusedSections() {
-    ArrayList<BoardSection> sections = new ArrayList<BoardSection>();
-    
-    for (int row = 0; row < getHeight(); row++) {
-      for (int col = 0; col < getWidth(); col++) {
-        if (!boardSections[row][col].isUsed()) {
-          sections.add(boardSections[row][col]);
-        }
-      }
-    }
-    
-    return sections;
+  public BoardSection[][] getAllSections() {
+    return boardSections;
   }
   
   public BoardSection getSectionAt(int col, int row) {
