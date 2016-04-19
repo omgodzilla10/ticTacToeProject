@@ -23,7 +23,5 @@ public class TurnListener extends MouseAdapter {
         section.getBoard().opponentTakeTurn();
       }
     }
-    
-    section.getBoard().checkGameOver();
   }
 }

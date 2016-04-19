@@ -17,7 +17,7 @@ public class RandomAI implements AIOpponent {
     
     if (unusedSections.size() > 0) {
       Collections.shuffle(unusedSections);
-      unusedSections.get(0).takeTurn(false);
+      unusedSections.get(0).takeTurn(true);
     }
   }
 }

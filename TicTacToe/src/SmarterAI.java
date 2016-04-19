@@ -101,7 +101,7 @@ public class SmarterAI implements AIOpponent {
   }
   
   public void randomize() {
-    randomizeAllWeights(-2f, 2f);
+    randomizeAllWeights(-5f, 5f);
   }
   
   private void randomizeAllWeights(float min, float max) {

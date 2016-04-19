@@ -4,13 +4,15 @@ import java.util.concurrent.TimeUnit;
 public class Board {
   private BoardSection[][] boardSections;
   private AIOpponent opponent;
+  private AIOpponent randomOpponent;
   
   public Board(int width, int height) {
     boardSections = new BoardSection[width][height];
+    randomOpponent = new RandomAI();
   }
   
-  public void setOpponent(AIOpponent opponent) {
-    this.opponent = opponent;
+  public void setOpponent(AIOpponent newOpponent) {
+    this.opponent = newOpponent;
   }
   
   public void init() {
@@ -22,8 +24,32 @@ public class Board {
     }
   }
   
+  public void startGame() {
+    while (true) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      
+      opponentTakeTurn();
+      checkGameOver();
+      
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      
+      randomOpponent.takeTurn(boardSections);
+      checkGameOver();
+    }
+  }
+  
   public void opponentTakeTurn() {
+    checkGameOver();
     opponent.takeTurn(getAllSections());
+    checkGameOver();
   }
   
   public BoardSection[][] getAllSections() {
@@ -45,17 +71,22 @@ public class Board {
   public void checkGameOver() {
     if (isGameOver()) {
       try {
-        TimeUnit.MILLISECONDS.sleep(250);
+        TimeUnit.MILLISECONDS.sleep(500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
       
       resetBoard();
-      ((SmarterAI)opponent).randomize();
+      //((SmarterAI)opponent).randomize();
     }
   }
   
   private boolean isGameOver() {
+    boolean gameWon;
+    if ((gameWon = isGameWon())) {
+      return true;
+    }
+    
     for (int col = 0; col < boardSections.length; col++) {
       for (int row = 0; row < boardSections[0].length; row++) {
         if (!boardSections[col][row].isUsed()) {
@@ -65,6 +96,60 @@ public class Board {
     }
     
     return true;
+  }
+  
+  private boolean isGameWon() {
+    return (checkHorizontalWins() || checkVerticalWins());
+  }
+  
+  private boolean checkHorizontalWins() {
+    int horizontalX;
+    int horizontalO;
+    
+    for (int row = 0; row < boardSections[0].length; row++) {
+      horizontalX = 0;
+      horizontalO = 0;
+      for (int col = 0; col < boardSections.length; col++) {
+        if (boardSections[col][row].getMarking() == BoardSection.Marking.X) {
+          horizontalX++;
+        }
+        
+        else if (boardSections[col][row].getMarking() == BoardSection.Marking.O) {
+          horizontalO++;
+        }
+      }
+      
+      if (horizontalX == boardSections.length || horizontalO == boardSections.length) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  private boolean checkVerticalWins() {
+    int verticalX;
+    int verticalO;
+    
+    for (int col = 0; col < boardSections.length; col++) {
+      verticalX = 0;
+      verticalO = 0;
+      for (int row = 0; row < boardSections[0].length; row++) {
+        if (boardSections[col][row].getMarking() == BoardSection.Marking.X) {
+          verticalX++;
+        }
+        
+        else if (boardSections[col][row].getMarking() == BoardSection.Marking.O) {
+          verticalO++;
+        }
+      }
+      
+      if (verticalX == boardSections[0].length || verticalO == boardSections[0].length) {
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   public void resetBoard() {

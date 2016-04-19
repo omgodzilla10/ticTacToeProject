@@ -70,6 +70,7 @@ public class BoardSection extends JPanel {
   
   public void setColor(Color newColor) {
     setBackground(newColor);
+    repaint();
   }
   
   public Board getBoard() {

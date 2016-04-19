@@ -22,5 +22,7 @@ public class Driver {
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.init();
     frame.setVisible(true);
+    
+    board.startGame();
   }
 }
