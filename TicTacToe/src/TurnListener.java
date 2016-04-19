@@ -15,8 +15,7 @@ public class TurnListener extends MouseAdapter {
   }
   
   public void takeTurn(boolean playerTurn) {
-    if (turnsMade < (section.getBoard().getWidth() 
-        * section.getBoard().getHeight()) && !section.isUsed()) {
+    if (!section.isUsed()) {
       turnsMade++;
       section.takeTurn(playerTurn);
       
@@ -24,5 +23,7 @@ public class TurnListener extends MouseAdapter {
         section.getBoard().opponentTakeTurn();
       }
     }
+    
+    section.getBoard().checkGameOver();
   }
 }

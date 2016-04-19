@@ -9,12 +9,13 @@ public class Driver {
   public static void main(final String[] argv) {
     final Frame frame;
     final Board board;
-    final RandomAI randomAI;
+    final AIOpponent opponent;
     
-    randomAI = new RandomAI();
-    
-    board = new Board(COLUMNS, ROWS, randomAI);
+    board = new Board(COLUMNS, ROWS);
     board.init();
+    
+    opponent = new SmarterAI(board.getHeight(), board.getWidth(), BoardSection.Marking.O);
+    board.setOpponent(opponent);
     
     frame = new Frame(board);
     frame.setSize(new Dimension(500, 500));

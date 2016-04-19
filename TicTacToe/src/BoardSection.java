@@ -8,13 +8,21 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 
 public class BoardSection extends JPanel {
-  private boolean isUsed;
+  private static final long serialVersionUID = 1L;
+
+  enum Marking {
+    Empty,
+    X,
+    O;
+  }
+  
+  private Marking currentMarking;
   private Board board;
   private TurnListener turnListener;
   
   public BoardSection(int col, int row, Board board) {
     this.board = board;
-    isUsed = false;
+    currentMarking = Marking.Empty;
     turnListener = new TurnListener(this);
   }
   
@@ -26,20 +34,38 @@ public class BoardSection extends JPanel {
   }
   
   public void takeTurn(boolean playerTurn) {
-    setUsed(true);
-    setColor(playerTurn? Color.BLUE : Color.RED);
+    setMarking(playerTurn? Marking.X : Marking.O);
   }
   
   public TurnListener getTurnListener() {
     return turnListener;
   }
   
-  public boolean isUsed() {
-    return isUsed;
+  public Marking getMarking() {
+    return currentMarking;
   }
   
-  public void setUsed(boolean isUsed) {
-    this.isUsed = isUsed;
+  public void setMarking(Marking newMarking) {
+    currentMarking = newMarking;
+    
+    switch (currentMarking) {
+      case Empty: setColor(Color.WHITE);
+        break;
+      case X: setColor(Color.BLUE);
+        break;
+      case O: setColor(Color.RED);
+        break;
+      default: break;
+    }
+  }
+  
+  public void reset() {
+    setMarking(Marking.Empty);
+    setColor(Color.WHITE);
+  }
+  
+  public boolean isUsed() {
+    return (getMarking() == Marking.X || getMarking() == Marking.O);
   }
   
   public void setColor(Color newColor) {
