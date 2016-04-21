@@ -11,17 +11,16 @@ public class TurnListener extends MouseAdapter {
   
   @Override
   public void mousePressed(MouseEvent e) {
-    takeTurn(true);
+    takeTurn();
+    section.getBoard().opponentTakeTurn();
   }
   
-  public void takeTurn(boolean playerTurn) {
+  public void takeTurn() {
     if (!section.isUsed()) {
       turnsMade++;
-      section.takeTurn(playerTurn);
-      
-      if (playerTurn) {
-        section.getBoard().opponentTakeTurn();
-      }
+      section.takeTurn(BoardSection.Marking.X);
     }
+    
+    section.getBoard().checkGameOver();
   }
 }

@@ -3,16 +3,19 @@ import java.util.concurrent.TimeUnit;
 
 public class Board {
   private BoardSection[][] boardSections;
-  private AIOpponent opponent;
-  private AIOpponent randomOpponent;
+  private AIOpponent aiOpponent;
+  private AIOpponent aiPlayer;
   
   public Board(int width, int height) {
     boardSections = new BoardSection[width][height];
-    randomOpponent = new RandomAI();
   }
   
-  public void setOpponent(AIOpponent newOpponent) {
-    this.opponent = newOpponent;
+  public void setOpponentAI(AIOpponent newOpponent) {
+    this.aiOpponent = newOpponent;
+  }
+  
+  public void setPlayerAI(AIOpponent newPlayer) {
+    this.aiPlayer = newPlayer;
   }
   
   public void init() {
@@ -24,32 +27,103 @@ public class Board {
     }
   }
   
-  public void startGame() {
-    while (true) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(100);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+  public void startGames(int numToPlay, long delay) {
+    if (aiPlayer != null && aiOpponent != null) {
+      for (int i = 0; i < numToPlay; i++) {
+        playAiGame(delay);
       }
-      
-      opponentTakeTurn();
-      checkGameOver();
-      
-      try {
-        TimeUnit.MILLISECONDS.sleep(100);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      
-      randomOpponent.takeTurn(boardSections);
-      checkGameOver();
     }
   }
   
+  public void playAiGame(long delay) {
+    boolean gameFinished = false;
+    
+    while (!gameFinished) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(delay);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      
+      aiPlayer.takeTurn(boardSections);
+      
+      gameFinished = isGameOver();
+      if (!gameFinished) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(delay);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        
+        aiOpponent.takeTurn(boardSections);
+        
+        gameFinished = isGameOver();
+      }
+    }
+    
+    try {
+      TimeUnit.MILLISECONDS.sleep(delay);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    resetBoard();
+  }
+  
   public void opponentTakeTurn() {
-    checkGameOver();
-    opponent.takeTurn(getAllSections());
-    checkGameOver();
+    aiOpponent.takeTurn(boardSections);
+  }
+  
+  public AIOpponent getPlayerAi() {
+    return aiPlayer;
+  }
+  
+  public AIOpponent getOpponentAi() {
+    return aiOpponent;
+  }
+  
+  public void trainSmartAi(boolean trainPlayer, int iterationsPerTrain, int timesToTrain) {
+    SmarterAI aiToTrain;
+    float[][][] weightVector = ((SmarterAI)aiPlayer).getWeightVector();
+    int totalGames;
+    float bestPercWins = 0;
+    float percWins;
+    
+    if (trainPlayer) {
+      aiToTrain = (SmarterAI)aiPlayer;
+    } else {
+      aiToTrain = (SmarterAI)aiOpponent;
+    }
+    
+    for (int i = 0; i < timesToTrain; i++) {
+      aiToTrain.randomizeAllWeights(-0.8f, 0.8f);
+      startGames(iterationsPerTrain, 0);
+      
+      totalGames = aiPlayer.getWins() + aiOpponent.getWins();
+      percWins = (float)aiPlayer.getWins() / (float)totalGames * 100;
+      
+      // If the AI beats it's best score.
+      if (percWins > bestPercWins) {
+        bestPercWins = percWins;
+        weightVector = ((SmarterAI)aiPlayer).getWeightVector();
+        System.out.println("New best! (" + percWins + ", " + i + ")");
+        
+        if ((int)percWins == 100) {
+          break;
+        }
+      } else {
+        // If the AI did not improve upon it's high score, roll back to best vectors.
+        ((SmarterAI)aiPlayer).setWeightVector(weightVector);
+      }
+      
+      aiPlayer.resetWins();
+      aiOpponent.resetWins();
+    }
+    
+    if (trainPlayer) {
+      aiPlayer = aiToTrain;
+    } else {
+      aiOpponent = aiToTrain;
+    }
   }
   
   public BoardSection[][] getAllSections() {
@@ -71,13 +145,12 @@ public class Board {
   public void checkGameOver() {
     if (isGameOver()) {
       try {
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(100);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
       
       resetBoard();
-      //((SmarterAI)opponent).randomize();
     }
   }
   
@@ -87,6 +160,7 @@ public class Board {
       return true;
     }
     
+    // Check for a stalemate.
     for (int col = 0; col < boardSections.length; col++) {
       for (int row = 0; row < boardSections[0].length; row++) {
         if (!boardSections[col][row].isUsed()) {
@@ -119,7 +193,19 @@ public class Board {
         }
       }
       
-      if (horizontalX == boardSections.length || horizontalO == boardSections.length) {
+      if (horizontalX == boardSections.length) {
+        if (aiPlayer != null) {
+          aiPlayer.incrementWins();
+        }
+        
+        return true;
+      }
+          
+      else if (horizontalO == boardSections.length) {
+        if (aiOpponent != null) {
+          aiOpponent.incrementWins();
+        }
+        
         return true;
       }
     }
@@ -144,7 +230,19 @@ public class Board {
         }
       }
       
-      if (verticalX == boardSections[0].length || verticalO == boardSections[0].length) {
+      if (verticalX == boardSections[0].length) {
+        if (aiPlayer != null) {
+          aiPlayer.incrementWins();
+        }
+        
+        return true;
+      }
+          
+      else if (verticalO == boardSections[0].length) {
+        if (aiOpponent != null) {
+          aiOpponent.incrementWins();
+        }
+        
         return true;
       }
     }

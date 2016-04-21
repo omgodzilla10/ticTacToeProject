@@ -33,8 +33,8 @@ public class BoardSection extends JPanel {
     addMouseListener(turnListener);
   }
   
-  public void takeTurn(boolean playerTurn) {
-    setMarking(playerTurn? Marking.X : Marking.O);
+  public void takeTurn(Marking mark) {
+    setMarking(mark);
   }
   
   public TurnListener getTurnListener() {
