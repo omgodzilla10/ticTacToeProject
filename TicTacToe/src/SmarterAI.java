@@ -6,57 +6,57 @@ public class SmarterAI implements AIOpponent, Serializable {
   private int wins;
   BoardSection.Marking mark;
   Random rand;
-  Node[] inputNodesX;
-  Node[] inputNodesO;
+  Node[] inputNodes;
   Node[] hiddenLayer;
   Node[] hiddenLayer2;
+  Node[] hiddenLayer3;
   Node outputNode;
   
   public SmarterAI(int height, int width, BoardSection.Marking mark) {
     this.mark = mark;
     rand = new Random();
     
-    inputNodesX = new Node[height * width];
-    inputNodesO = new Node[height * width];
+    inputNodes = new Node[height * width];
     hiddenLayer = new Node[height * width];
     hiddenLayer2 = new Node[height + width];
+    hiddenLayer3 = new Node[height * width];
     outputNode = new Node();
     
     init(height, width);
   }
   
   private void init(int height, int width) {
-    for (int i = 0; i < width * height; i++) {
+    for (int i = 0; i < hiddenLayer.length; i++) {
       hiddenLayer[i] = new Node();
     }
     
     for (int i = 0; i < hiddenLayer2.length; i++) {
-      Connection endConnect = new Connection(0f);
       hiddenLayer2[i] = new Node();
-      
-      endConnect.addNode(outputNode);
-      hiddenLayer2[i].addConnection(endConnect);
     }
     
-    for (int i = 0; i < width * height; i++) {
-      inputNodesX[i] = new Node();
-      inputNodesO[i] = new Node();
+    for (int i = 0; i < hiddenLayer3.length; i++) {
+      Connection endConnect = new Connection(0f);
+      hiddenLayer3[i] = new Node();
+      
+      endConnect.addNode(outputNode);
+      hiddenLayer3[i].addConnection(endConnect);
+    }
+    
+    for (int i = 0; i < inputNodes.length; i++) {
+      inputNodes[i] = new Node();
       
       for (int j = 0; j < hiddenLayer.length; j++) {
-        Connection xConnect = new Connection(0f);
-        Connection yConnect = new Connection(0f);
+        Connection connect = new Connection(0f);
         
-        xConnect.addNode(hiddenLayer[j]);
-        yConnect.addNode(hiddenLayer[j]);
+        connect.addNode(hiddenLayer[j]);
         
-        inputNodesX[i].addConnection(xConnect);
-        inputNodesO[i].addConnection(yConnect);
+        inputNodes[i].addConnection(connect);
       }
 
       fillInnerConnections(i);
     }
     
-    randomize();
+    randomizeAllWeights(0f, 50f);
   }
   
   private void fillInnerConnections(int hiddenIdx) {
@@ -101,6 +101,15 @@ public class SmarterAI implements AIOpponent, Serializable {
       innerConnect.addNode(hiddenLayer2[5]);
       hiddenLayer[hiddenIdx].addConnection(innerConnect);
     }
+    
+    for (int i = 0; i < hiddenLayer2.length; i++) {
+      for (int j = 0; j < hiddenLayer3.length; j++) {
+        Connection newConnect = new Connection(0f);
+        newConnect.addNode(hiddenLayer3[j]);
+        
+        hiddenLayer2[i].addConnection(newConnect);
+      }
+    }
   }
   
   public int getWins() {
@@ -128,9 +137,9 @@ public class SmarterAI implements AIOpponent, Serializable {
     for (int col = 0; col < sections.length; col++) {
       for (int row = 0; row < sections.length; row++) {
         if (sections[col][row].getMarking() == mark) {
-          inputNodesO[currentNodeIdx].activate(1f);
+          inputNodes[currentNodeIdx].activate(1f);
         } else if (sections[col][row].isUsed()) {
-          inputNodesX[currentNodeIdx].activate(-1f);
+          inputNodes[currentNodeIdx].activate(-1f);
         }
         
         currentNodeIdx++;
@@ -166,36 +175,35 @@ public class SmarterAI implements AIOpponent, Serializable {
     return unusedSections;
   }
   
-  public void randomize() {
-    randomizeAllWeights(0f, 4f);
-  }
-  
   public void randomizeAllWeights(float min, float max) {
-    for (int i = 0; i < inputNodesX.length; i++) {
-      for (Connection connect : inputNodesX[i].connections) {
+    for (int i = 0; i < inputNodes.length; i++) {
+      for (Connection connect : inputNodes[i].connections) {
         connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
       }
-      
-      for (Connection connect : inputNodesO[i].connections) {
-        connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
-      }
-      
+    }
+    
+    for (int i = 0; i < hiddenLayer.length; i++) {
       for (Connection connect : hiddenLayer[i].connections) {
         connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
       }
-      
-      if (i < hiddenLayer2.length) {
-        for (Connection connect : hiddenLayer2[i].connections) {
-          connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
-        }
+    }
+    
+    for (int i = 0; i < hiddenLayer2.length; i++) {
+      for (Connection connect : hiddenLayer2[i].connections) {
+        connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
+      }
+    }
+    
+    for (int i = 0; i < hiddenLayer3.length; i++) {
+      for (Connection connect : hiddenLayer3[i].connections) {
+        connect.weight += (rand.nextFloat() % (max - min + 1)) + min;
       }
     }
   }
   
   private void resetAllNodes() {
-    for (int i = 0; i < inputNodesX.length; i++) {
-      inputNodesX[i].reset();
-      inputNodesO[i].reset();
+    for (int i = 0; i < inputNodes.length; i++) {
+      inputNodes[i].reset();
       hiddenLayer[i].reset();
       
       if (i < hiddenLayer2.length) {
@@ -222,25 +230,24 @@ public class SmarterAI implements AIOpponent, Serializable {
   }
   
   public float[][][] getWeightVector() {
-    float[][][] weightVector = new float[4][inputNodesX.length][inputNodesX.length];
+    float[][][] weightVector = new float[4][hiddenLayer3.length][hiddenLayer3.length];
     
     //Go through each InputNodeX
-    for (int i = 0; i < inputNodesX.length; i++) {
-      weightVector[0][i] = inputNodesX[i].getWeightVector();
-    }
-    
-    //Go through each InputNodeO
-    for (int i = 0; i < inputNodesO.length; i++) {
-      weightVector[1][i] = inputNodesO[i].getWeightVector();
+    for (int i = 0; i < inputNodes.length; i++) {
+      weightVector[0][i] = inputNodes[i].getWeightVector();
     }
     
     //Go through each hidden node
     for (int i = 0; i < hiddenLayer.length; i++) {
-      weightVector[2][i] = hiddenLayer[i].getWeightVector(); 
+      weightVector[1][i] = hiddenLayer[i].getWeightVector(); 
     }
     
     for (int i = 0; i < hiddenLayer2.length; i++) {
-      weightVector[3][i] = hiddenLayer2[i].getWeightVector();
+      weightVector[2][i] = hiddenLayer2[i].getWeightVector();
+    }
+    
+    for (int i = 0; i < hiddenLayer3.length; i++) {
+      weightVector[3][i] = hiddenLayer3[i].getWeightVector();
     }
     
     return weightVector;
@@ -248,23 +255,22 @@ public class SmarterAI implements AIOpponent, Serializable {
   
   public void setWeightVector(float[][][] weightVector) {
     //Go through each InputNodeX
-    for (int i = 0; i < inputNodesX.length; i++) {
-      inputNodesX[i].setWeightVector(weightVector[0][i]);
-    }
-    
-    //Go through each InputNodeO
-    for (int i = 0; i < inputNodesO.length; i++) {
-      inputNodesO[i].setWeightVector(weightVector[1][i]);
+    for (int i = 0; i < inputNodes.length; i++) {
+      inputNodes[i].setWeightVector(weightVector[0][i]);
     }
     
     //Go through each hidden node
     for (int i = 0; i < hiddenLayer.length; i++) {
-      hiddenLayer[i].setWeightVector(weightVector[2][i]);
+      hiddenLayer[i].setWeightVector(weightVector[1][i]);
     }
     
     //Go through each hidden node2
     for (int i = 0; i < hiddenLayer2.length; i++) {
-      hiddenLayer2[i].setWeightVector(weightVector[3][i]);
+      hiddenLayer2[i].setWeightVector(weightVector[2][i]);
+    }
+    
+    for (int i = 0; i < hiddenLayer3.length; i++) {
+      hiddenLayer3[i].setWeightVector(weightVector[3][i]);
     }
   }
   

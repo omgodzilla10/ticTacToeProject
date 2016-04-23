@@ -26,18 +26,20 @@ public class Driver {
     frame.setSize(new Dimension(500, 500));
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.init();
-    frame.setVisible(true);
     
-    for (int i = 0; i < 2000; i++) {
+    
+    for (int i = 0; i < 10; i++) {
       System.out.println("Player AI");
-      board.trainSmartAi(true, 100, 100);
+      board.trainSmartAi(true, 100, 20);
       
       System.out.println("Opponent AI");
-      board.trainSmartAi(false, 100, 100);
+      board.trainSmartAi(false, 100, 20);
       
       if (i % 10 == 0) {
         System.out.println("\t\tIteration: " + i);
       }
     }
+    
+    frame.setVisible(true);
   }
 }

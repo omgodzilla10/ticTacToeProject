@@ -95,7 +95,7 @@ public class Board {
     }
     
     for (int i = 0; i < timesToTrain; i++) {
-      aiToTrain.randomizeAllWeights(-0.8f, 0.8f);
+      aiToTrain.randomizeAllWeights(-1f, 1f);
       startGames(iterationsPerTrain, 0);
       
       totalGames = aiPlayer.getWins() + aiOpponent.getWins();
@@ -173,7 +173,70 @@ public class Board {
   }
   
   private boolean isGameWon() {
-    return (checkHorizontalWins() || checkVerticalWins());
+    return (checkHorizontalWins() || checkVerticalWins() || checkRightDiagonalWins()
+        || checkLeftDiagonalWins());
+  }
+  
+  private boolean checkRightDiagonalWins() {
+    int diagonalO = 0;
+    int diagonalX = 0;
+    
+    for (int col = 0, row = 0; col < getWidth() && row < getHeight(); row++, col++) {
+      if (boardSections[col][row].getMarking() == BoardSection.Marking.X) {
+        diagonalX++;
+      } else if (boardSections[col][row].getMarking() == BoardSection.Marking.O) {
+        diagonalO++;
+      }
+    }
+    
+    if (diagonalX == getHeight()) {
+      if (aiPlayer != null) {
+        aiPlayer.incrementWins();
+      }
+      
+      return true;
+    }
+    
+    if (diagonalO == getHeight()) {
+      if (aiOpponent != null) {
+        aiOpponent.incrementWins();
+      }
+      
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private boolean checkLeftDiagonalWins() {
+    int diagonalO = 0;
+    int diagonalX = 0;
+    
+    for (int col = getWidth() - 1, row = 0; col >= 0 && row < getHeight(); row++, col--) {
+      if (boardSections[col][row].getMarking() == BoardSection.Marking.X) {
+        diagonalX++;
+      } else if (boardSections[col][row].getMarking() == BoardSection.Marking.O) {
+        diagonalO++;
+      }
+    }
+    
+    if (diagonalX == getHeight()) {
+      if (aiPlayer != null) {
+        aiPlayer.incrementWins();
+      }
+      
+      return true;
+    }
+    
+    if (diagonalO == getHeight()) {
+      if (aiOpponent != null) {
+        aiOpponent.incrementWins();
+      }
+      
+      return true;
+    }
+    
+    return false;
   }
   
   private boolean checkHorizontalWins() {
