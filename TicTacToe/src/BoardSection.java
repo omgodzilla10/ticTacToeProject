@@ -19,11 +19,16 @@ public class BoardSection extends JPanel {
   private Marking currentMarking;
   private Board board;
   private TurnListener turnListener;
+  private int col;
+  private int row;
   
   public BoardSection(int col, int row, Board board) {
     this.board = board;
     currentMarking = Marking.Empty;
     turnListener = new TurnListener(this);
+    
+    this.col = col;
+    this.row = row;
   }
   
   public void init() {
@@ -75,5 +80,13 @@ public class BoardSection extends JPanel {
   
   public Board getBoard() {
     return board;
+  }
+
+  public int getRow() {
+    return row;
+  }
+  
+  public int getCol() {
+    return col;
   }
 }

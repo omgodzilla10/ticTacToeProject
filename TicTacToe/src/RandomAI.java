@@ -41,4 +41,9 @@ public class RandomAI implements AIOpponent {
   public void resetWins() {
     wins = 0;
   }
+
+  @Override
+  public void setMarking(BoardSection.Marking newMark) {
+    mark = newMark;
+  }
 }

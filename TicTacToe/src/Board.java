@@ -10,12 +10,12 @@ public class Board {
     boardSections = new BoardSection[width][height];
   }
   
-  public void setOpponentAI(AIOpponent newOpponent) {
-    this.aiOpponent = newOpponent;
+  public void setOpponentAi(AIOpponent newOpponent) {
+    aiOpponent = newOpponent;
   }
   
-  public void setPlayerAI(AIOpponent newPlayer) {
-    this.aiPlayer = newPlayer;
+  public void setPlayerAi(AIOpponent newPlayer) {
+    aiPlayer = newPlayer;
   }
   
   public void init() {
@@ -29,13 +29,19 @@ public class Board {
   
   public void startGames(int numToPlay, long delay) {
     if (aiPlayer != null && aiOpponent != null) {
-      for (int i = 0; i < numToPlay; i++) {
-        playAiGame(delay);
+      for (int i = 0; i < 4; i++) {
+        new Thread() {
+          public void run() {
+            for (int j = 0; j < numToPlay / 4; j++) {
+              playAiGame(delay);
+            }
+          }
+        }.run();
       }
     }
   }
   
-  public void playAiGame(long delay) {
+  public synchronized void playAiGame(long delay) {
     boolean gameFinished = false;
     
     while (!gameFinished) {
@@ -81,12 +87,12 @@ public class Board {
     return aiOpponent;
   }
   
-  public void trainSmartAi(boolean trainPlayer, int iterationsPerTrain, int timesToTrain) {
+  public synchronized void trainSmartAi(boolean trainPlayer, int iterationsPerTrain, int timesToTrain) {
     SmarterAI aiToTrain;
-    float[][][] weightVector = ((SmarterAI)aiPlayer).getWeightVector();
-    int totalGames;
-    float bestPercWins = 0;
-    float percWins;
+    float[][][] weightVector;
+    int bestScore = 0;
+    int score;
+    float randExpansion = 1f;
     
     if (trainPlayer) {
       aiToTrain = (SmarterAI)aiPlayer;
@@ -94,35 +100,88 @@ public class Board {
       aiToTrain = (SmarterAI)aiOpponent;
     }
     
+    weightVector = aiToTrain.getWeightVector();
+    
     for (int i = 0; i < timesToTrain; i++) {
-      aiToTrain.randomizeAllWeights(-1f, 1f);
       startGames(iterationsPerTrain, 0);
       
-      totalGames = aiPlayer.getWins() + aiOpponent.getWins();
-      percWins = (float)aiPlayer.getWins() / (float)totalGames * 100;
+      score = aiToTrain.getWins() + (iterationsPerTrain - aiOpponent.getWins() 
+          - aiPlayer.getWins());
       
       // If the AI beats it's best score.
-      if (percWins > bestPercWins) {
-        bestPercWins = percWins;
-        weightVector = ((SmarterAI)aiPlayer).getWeightVector();
-        System.out.println("New best! (" + percWins + ", " + i + ")");
+      if (score > bestScore) {
+        bestScore = score;
+        weightVector = aiToTrain.getWeightVector();
+        randExpansion = 1f;
         
-        if ((int)percWins == 100) {
-          break;
-        }
+        System.out.println("New best! (" + score + ", " + i + ")");
       } else {
-        // If the AI did not improve upon it's high score, roll back to best vectors.
-        ((SmarterAI)aiPlayer).setWeightVector(weightVector);
+        aiToTrain.setWeightVector(weightVector);
+        randExpansion *= 1.05f;
       }
       
       aiPlayer.resetWins();
       aiOpponent.resetWins();
+      
+      aiToTrain.randomizeAllWeights(-randExpansion, randExpansion);
     }
+  }
+  
+  public synchronized void trainSmartAi2(boolean trainPlayer, int iterationsPerTrain, int timesToTrain) {
+    int score;
+    int bestScore = 0;
+    float minRand = -2f;
+    float maxRand = 2f;
+    SmarterAI aiToTrain;
+    float[][][] tempWeightVector;
+    float[][][] weightVector;
     
     if (trainPlayer) {
-      aiPlayer = aiToTrain;
+      aiToTrain = (SmarterAI)aiPlayer;
     } else {
-      aiOpponent = aiToTrain;
+      aiToTrain = (SmarterAI)aiOpponent;
+    }
+    
+    weightVector = aiToTrain.getWeightVector();
+    
+    for (int dim1 = 0; dim1 < weightVector.length; dim1++) {
+      for (int dim2 = 0; dim2 < weightVector[dim1].length; dim2++) {
+        for (int dim3 = 0; dim3 < weightVector[dim1][dim2].length; dim3++) {
+          System.out.println("Training " + dim1 + ", " + dim2 + ", " + dim3);
+          for (int i = 0; i < timesToTrain; i++) {
+            tempWeightVector = weightVector;
+            tempWeightVector[dim1][dim2][dim3] += ((Math.random() % (maxRand - minRand)) + minRand);
+            
+            aiToTrain.setWeightVector(tempWeightVector);
+            startGames(iterationsPerTrain, 0);
+            score = aiToTrain.getWins();
+            
+            if (score > bestScore) {
+              bestScore = score;
+              weightVector = tempWeightVector;
+            }
+            
+            aiPlayer.resetWins();
+            aiOpponent.resetWins();
+          }
+          
+          aiToTrain.setWeightVector(weightVector);
+          bestScore = 0;
+        }
+      }
+    }
+  }
+  
+  public SmarterAI getSmartestAi() {
+    aiPlayer.resetWins();
+    aiOpponent.resetWins();
+    
+    playAiGame(100);
+    
+    if (aiPlayer.getWins() > aiOpponent.getWins()) {
+      return (SmarterAI)aiPlayer;
+    } else {
+      return (SmarterAI)aiOpponent;
     }
   }
   
@@ -155,8 +214,7 @@ public class Board {
   }
   
   private boolean isGameOver() {
-    boolean gameWon;
-    if ((gameWon = isGameWon())) {
+    if (isGameWon()) {
       return true;
     }
     

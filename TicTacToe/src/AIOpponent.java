@@ -5,4 +5,5 @@ public interface AIOpponent {
   public int getWins();
   public void incrementWins();
   public void resetWins();
+  public void setMarking(BoardSection.Marking newMark);
 }
